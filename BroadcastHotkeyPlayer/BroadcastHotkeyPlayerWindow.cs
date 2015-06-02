@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,14 +19,16 @@ namespace BroadcastHotkeyPlayer
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
          
-        private BroadcastHotkeyPlayer player = new BroadcastHotkeyPlayer();
+        private BroadcastHotkeyPlayer player;
         private BroadcastHotkeyPlayerNetListen listener;
         private BroadcastHotkeyPlayerNetSend sender = new BroadcastHotkeyPlayerNetSend();
 
         private static int WM_HOTKEY = 0x0312;
 
         private bool fstDigitRecorded = false;
+        private bool sndDigitRecorded = false;
         private int fstDigit = 0;
+        private int sndDigit = 0;
 
         enum KeyModifier
         {
@@ -39,6 +42,7 @@ namespace BroadcastHotkeyPlayer
         public BroadcastHotkeyPlayerWindow()
         {
             InitializeComponent();
+            player = new BroadcastHotkeyPlayer(this);
             listener = new BroadcastHotkeyPlayerNetListen(this);
             
             mynotifyIcon.BalloonTipText = "Listening for Hotkeys...";
@@ -65,28 +69,26 @@ namespace BroadcastHotkeyPlayer
 
             if (m.Msg == WM_HOTKEY)
             { 
-                Keys key = (Keys)(((int)m.LParam >> 16) & 0xFFFF);                  // The key of the hotkey that was pressed.
-                KeyModifier modifier = (KeyModifier)((int)m.LParam & 0xFFFF);       // The modifier of the hotkey that was pressed.
-                int id = m.WParam.ToInt32();                                        // The id of the hotkey that was pressed.
+                //Keys key = (Keys)(((int)m.LParam >> 16) & 0xFFFF);                  // The key of the hotkey that was pressed.
+                //KeyModifier modifier = (KeyModifier)((int)m.LParam & 0xFFFF);       // The modifier of the hotkey that was pressed.
+                int id = m.WParam.ToInt32();                                          // The id of the hotkey that was pressed.
 
-                if (fstDigitRecorded == false)
+                if (!fstDigitRecorded)
                 {
                     fstDigitRecorded = true;
                     fstDigit = id;
                 }
-                else if (fstDigitRecorded)
+                else if (fstDigitRecorded && !sndDigitRecorded)
                 {
-                    sender.Send("" + fstDigit + id);
-                    fstDigitRecorded = false;
+                    sndDigitRecorded = true;
+                    sndDigit = id;
                 }
-                /*
-                if (id == 2)
-                    fstDigitRecorded = true;
-                else if (id == 5 && fstDigitRecorded)
-                    sender.Send("25");
-                else
+                else if (fstDigitRecorded && sndDigitRecorded)
+                {
+                    sender.Send("ply:" + fstDigit + sndDigit + id);
                     fstDigitRecorded = false;
-                */
+                    sndDigitRecorded = false;
+                }
             }
         }
 
@@ -115,16 +117,25 @@ namespace BroadcastHotkeyPlayer
 
         }
 
-        public void play()
+        public void play(string param)
         {
             try
             {
-                player.LoadSoundAsync();
+                player.LoadSoundAsync(param);
             }
-            catch (Exception e)
+            catch (FileNotFoundException e)
             {
-                MessageBox.Show("unable to laod sound: {0}", e.ToString());
+                showErrorNotification("Unable to load sound", param);
             }
+        }
+
+        private void showErrorNotification(string text, string param)
+        {
+            this.mynotifyIcon.BalloonTipText = text + "\n" + param;
+            this.mynotifyIcon.BalloonTipTitle = "Error";
+            this.mynotifyIcon.BalloonTipIcon = ToolTipIcon.Error;
+            this.mynotifyIcon.Visible = true;
+            this.mynotifyIcon.ShowBalloonTip(3);
         }
     }
 }

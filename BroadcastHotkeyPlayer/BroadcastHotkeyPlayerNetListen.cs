@@ -11,10 +11,12 @@ namespace BroadcastHotkeyPlayer
     class BroadcastHotkeyPlayerNetListen
     {
         private const int listenPort = 11000;
+        private const string cmdPlay = "ply";
+        private char[] sepeartor = new char[] { ':' };
+
         private UdpClient listener;
-
         private BroadcastHotkeyPlayerWindow window;
-
+        
         public BroadcastHotkeyPlayerNetListen(BroadcastHotkeyPlayerWindow window)
         {
             this.window = window;
@@ -45,12 +47,19 @@ namespace BroadcastHotkeyPlayer
             IPEndPoint RemoteIPEndPoint = new IPEndPoint(IPAddress.Any, listenPort);
             byte[] received = listener.EndReceive(res, ref RemoteIPEndPoint);
             listener.BeginReceive(new AsyncCallback(recv), null);
-            String msg = Encoding.ASCII.GetString(received);
-            if (String.Compare(msg, "25") == 0)
-            {
-                window.play();
-            }
+            decodeMsg(Encoding.ASCII.GetString(received));
+        }
 
+        private void decodeMsg(string msg)
+        {
+            string[] splits = msg.Split(sepeartor, 2);
+            string cmd = splits[0];
+            string param = splits[1];
+
+            switch (cmd)
+            {
+                case cmdPlay: window.play(param); break;
+            }
         }
     }
 }
