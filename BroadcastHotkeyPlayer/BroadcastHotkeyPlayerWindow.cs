@@ -38,6 +38,7 @@ namespace BroadcastHotkeyPlayer
 
         public BroadcastHotkeyPlayerWindow()
         {
+            Console.WriteLine("est");
             InitializeComponent();
             listener = new BroadcastHotkeyPlayerNetListen(this);
             
