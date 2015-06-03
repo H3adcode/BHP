@@ -19,7 +19,7 @@ namespace BroadcastHotkeyPlayer
 
         public BroadcastHotkeyPlayer(BroadcastHotkeyPlayerWindow window)
         {
-            this.window = window;
+            this.window = window; ;
             soundPlayer.LoadCompleted += new AsyncCompletedEventHandler(Player_LoadCompleted);
         }
 
