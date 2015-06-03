@@ -114,7 +114,10 @@ namespace BroadcastHotkeyPlayer
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            PictureBox pb1 = new PictureBox();
+            pb1.ImageLocation = Environment.CurrentDirectory + "logo.png";
+            pb1.SizeMode = PictureBoxSizeMode.AutoSize;
+            this.Controls.Add(pb1);
         }
 
         public void play(string param)
